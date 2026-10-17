@@ -1,7 +1,5 @@
 # ui-actuator
 
-Spring Boot has `/actuator/info`. Frontend apps have nothing.
-
 `ui-actuator` reads the `version` from your `package.json` and writes a `version.json` into your build output, so every deployed UI answers:
 
 ```
