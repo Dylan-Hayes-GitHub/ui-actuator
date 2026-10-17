@@ -1,4 +1,11 @@
 {
+
+  "author": "Dylan Hayes",
+  "keywords": ["actuator", "ui", "angular"],
+  "repository": {
+    "url": "https://github.com/Dylan-Hayes-GitHub/ui-actuator.git",
+    "type": "git"
+  },
   "name": "ui-actuator",
   "version": "0.1.0",
   "description": "Actuator-style version info for frontend apps",
