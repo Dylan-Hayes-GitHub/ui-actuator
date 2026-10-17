@@ -51,10 +51,69 @@ describe('write', () => {
     expect(readOutput()).toEqual({ app: { version: '3.0.0' } });
   });
 
-  it('throws when the output folder does not exist', () => {
+  it('throws when the --out folder does not exist', () => {
+    setup({ version: '1.0.0' });
+
+    expect(() => write({ root, out: 'nope' })).toThrow(/output folder .* not found/);
+  });
+
+  it('throws when dist does not exist and no --out is given', () => {
     writeFileSync(join(root, 'package.json'), JSON.stringify({ version: '1.0.0' }));
 
-    expect(() => write({ root })).toThrow(/output folder .* not found/);
+    expect(() => write({ root })).toThrow(/dist not found/);
+  });
+
+  describe('auto-detecting the output folder', () => {
+    function addIndex(dir: string, file = 'index.html'): void {
+      mkdirSync(join(root, dir), { recursive: true });
+      writeFileSync(join(root, dir, file), '<html></html>');
+    }
+
+    it('uses dist when index.html is directly in it (Vite)', () => {
+      setup({ version: '1.0.0' });
+      addIndex('dist');
+
+      write({ root });
+
+      expect(readOutput('dist')).toEqual({ app: { version: '1.0.0' } });
+    });
+
+    it('finds dist/<app>/browser (Angular)', () => {
+      setup({ version: '1.0.0' });
+      addIndex('dist/my-app/browser');
+
+      write({ root });
+
+      expect(readOutput('dist/my-app/browser')).toEqual({ app: { version: '1.0.0' } });
+    });
+
+    it('finds the browser folder of an Angular SSR build (index.csr.html)', () => {
+      setup({ version: '1.0.0' });
+      addIndex('dist/my-app/browser', 'index.csr.html');
+      mkdirSync(join(root, 'dist/my-app/server'), { recursive: true });
+
+      write({ root });
+
+      expect(readOutput('dist/my-app/browser')).toEqual({ app: { version: '1.0.0' } });
+    });
+
+    it('throws when dist contains more than one app', () => {
+      setup({ version: '1.0.0' });
+      addIndex('dist/app-one/browser');
+      addIndex('dist/app-two/browser');
+
+      expect(() => write({ root })).toThrow(/multiple apps found/);
+    });
+
+    it('skips detection when --out is given', () => {
+      setup({ version: '1.0.0' });
+      addIndex('dist/app-one/browser');
+      addIndex('dist/app-two/browser');
+
+      write({ root, out: 'dist/app-two/browser' });
+
+      expect(readOutput('dist/app-two/browser')).toEqual({ app: { version: '1.0.0' } });
+    });
   });
 
   it('throws when package.json has no version', () => {
